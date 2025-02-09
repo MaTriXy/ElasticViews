@@ -25,47 +25,53 @@ package com.skydoves.elasticviews
 
 import android.content.Context
 import android.content.res.TypedArray
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
+import android.view.View
+import android.view.View.OnClickListener
+import androidx.annotation.Px
 import androidx.appcompat.widget.AppCompatButton
+import com.skydoves.elasticviews.Definitions.DEFAULT_DURATION
+import com.skydoves.elasticviews.Definitions.DEFAULT_SCALE
 
 @Suppress("unused")
-class ElasticButton : AppCompatButton {
+class ElasticButton @JvmOverloads constructor(
+  context: Context,
+  attrs: AttributeSet? = null,
+  defStyle: Int = androidx.appcompat.R.attr.buttonStyle
+) : AppCompatButton(context, attrs, defStyle), ElasticInterface {
 
-  var scale = 0.9f
-  var duration = 500
+  /** The target elastic scale size of the animation. */
+  var scale = DEFAULT_SCALE
+
+  /** The default duration of the animation. */
+  var duration = DEFAULT_DURATION
+
+  @Px
+  var cornerRadius = 0f
 
   private var onClickListener: OnClickListener? = null
   private var onFinishListener: ElasticFinishListener? = null
 
-  constructor(context: Context) : super(context) {
+  init {
     onCreate()
-  }
-
-  constructor(context: Context, attributeSet: AttributeSet) : super(context, attributeSet) {
-    onCreate()
-    getAttrs(attributeSet)
-  }
-
-  constructor(context: Context, attributeSet: AttributeSet, defStyle: Int) : super(context, attributeSet, defStyle) {
-    onCreate()
-    getAttrs(attributeSet, defStyle)
+    when {
+      attrs != null && defStyle != androidx.appcompat.R.attr.buttonStyle ->
+        getAttrs(attrs, defStyle)
+      attrs != null -> getAttrs(attrs)
+    }
   }
 
   private fun onCreate() {
     this.isAllCaps = false
     super.setOnClickListener {
-      if (scaleX == 1f) {
-        elasticAnimation(this) {
-          setDuration(duration)
-          setScaleX(scale)
-          setScaleY(scale)
-          setOnFinishListener(object : ElasticFinishListener {
-            override fun onFinished() {
-              invokeListeners()
-            }
-          })
-        }.doAction()
-      }
+      elasticAnimation(this) {
+        setDuration(this@ElasticButton.duration)
+        setScaleX(this@ElasticButton.scale)
+        setScaleY(this@ElasticButton.scale)
+        setOnFinishListener { invokeListeners() }
+      }.doAction()
     }
   }
 
@@ -88,20 +94,71 @@ class ElasticButton : AppCompatButton {
   }
 
   private fun setTypeArray(typedArray: TypedArray) {
-    this.scale = typedArray.getFloat(R.styleable.ElasticButton_button_scale, scale)
-    this.duration = typedArray.getInt(R.styleable.ElasticButton_button_duration, duration)
+    this.scale = typedArray.getFloat(R.styleable.ElasticButton_button_scale, this.scale)
+    this.duration = typedArray.getInt(R.styleable.ElasticButton_button_duration, this.duration)
+    this.cornerRadius =
+      typedArray.getDimension(R.styleable.ElasticButton_button_cornerRadius, this.cornerRadius)
+  }
+
+  override fun onFinishInflate() {
+    super.onFinishInflate()
+    initializeBackground()
+  }
+
+  private fun initializeBackground() {
+    if (background is ColorDrawable) {
+      background = GradientDrawable().apply {
+        cornerRadius = this@ElasticButton.cornerRadius
+        setColor((background as ColorDrawable).color)
+      }.mutate()
+    }
   }
 
   override fun setOnClickListener(listener: OnClickListener?) {
     this.onClickListener = listener
   }
 
-  fun setOnFinishListener(listener: ElasticFinishListener) {
+  override fun setOnFinishListener(listener: ElasticFinishListener?) {
     this.onFinishListener = listener
   }
 
+  override fun setOnClickListener(block: (View) -> Unit) =
+    setOnClickListener(OnClickListener(block))
+
+  override fun setOnFinishListener(block: () -> Unit) =
+    setOnFinishListener(ElasticFinishListener(block))
+
   private fun invokeListeners() {
-    onClickListener?.onClick(this)
-    onFinishListener?.onFinished()
+    this.onClickListener?.onClick(this)
+    this.onFinishListener?.onFinished()
+  }
+
+  /** Builder class for creating [ElasticButton]. */
+  class Builder(context: Context) {
+    private val elasticButton = ElasticButton(context)
+
+    fun setScale(value: Float) = apply { this.elasticButton.scale = value }
+    fun setDuration(value: Int) = apply { this.elasticButton.duration = value }
+    fun setCornerRadius(@Px value: Float) = apply { this.elasticButton.cornerRadius = value }
+
+    @JvmSynthetic
+    fun setOnClickListener(block: (View) -> Unit) = apply {
+      setOnClickListener(OnClickListener(block))
+    }
+
+    fun setOnClickListener(value: OnClickListener) = apply {
+      this.elasticButton.setOnClickListener(value)
+    }
+
+    @JvmSynthetic
+    fun setOnFinishListener(block: () -> Unit) = apply {
+      setOnFinishListener(ElasticFinishListener(block))
+    }
+
+    fun setOnFinishListener(value: ElasticFinishListener) = apply {
+      this.elasticButton.setOnFinishListener(value)
+    }
+
+    fun build() = this.elasticButton
   }
 }

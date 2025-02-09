@@ -21,11 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.skydoves.elasticviews
+package com.skydoves.elasticviewsdemo
 
-/** ElasticFinishListener is for listening elastic animation terminated status. */
-fun interface ElasticFinishListener {
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import com.skydoves.elasticviewsdemo.databinding.ActivityMainBinding
 
-  /** invoked when the elastic animation is terminated. */
-  fun onFinished()
+class MainActivity : AppCompatActivity() {
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    val binding = ActivityMainBinding.inflate(layoutInflater)
+    setContentView(binding.root)
+  }
+
+  fun buttons(v: View) {
+    when (v.id) {
+      R.id.elasticbtn0 -> startActivity(Intent(baseContext, ExampleActivity0::class.java))
+      R.id.elasticbtn1 -> startActivity(Intent(baseContext, ExampleActivity1::class.java))
+      R.id.elasticbtn2 -> startActivity(Intent(baseContext, ExampleActivity2::class.java))
+    }
+  }
 }

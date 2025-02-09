@@ -25,48 +25,51 @@ package com.skydoves.elasticviews
 
 import android.content.Context
 import android.content.res.TypedArray
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
+import android.view.View
+import android.view.View.OnClickListener
 import android.widget.FrameLayout
+import androidx.annotation.Px
 
 @Suppress("unused")
-class ElasticLayout : FrameLayout {
+class ElasticLayout @JvmOverloads constructor(
+  context: Context,
+  attrs: AttributeSet? = null,
+  defStyle: Int = 0
+) : FrameLayout(context, attrs, defStyle), ElasticInterface {
 
-  var scale = 0.9f
-  var duration = 500
+  /** The target elastic scale size of the animation. */
+  var scale = Definitions.DEFAULT_SCALE
+
+  /** The default duration of the animation. */
+  var duration = Definitions.DEFAULT_DURATION
+
+  @Px
+  var cornerRadius = 0f
 
   private var onClickListener: OnClickListener? = null
   private var onFinishListener: ElasticFinishListener? = null
 
-  constructor(context: Context) : super(context) {
+  init {
     onCreate()
-  }
-
-  constructor(context: Context, attributeSet: AttributeSet) : super(context, attributeSet) {
-    onCreate()
-    getAttrs(attributeSet)
-  }
-
-  constructor(context: Context, attributeSet: AttributeSet, defStyle: Int) : super(context, attributeSet, defStyle) {
-    onCreate()
-    getAttrs(attributeSet, defStyle)
+    when {
+      attrs != null && defStyle != 0 -> getAttrs(attrs, defStyle)
+      attrs != null -> getAttrs(attrs)
+    }
   }
 
   private fun onCreate() {
     this.isClickable = true
     this.isFocusable = true
     super.setOnClickListener {
-      if (scaleX == 1f) {
-        elasticAnimation(this) {
-          setDuration(duration)
-          setScaleX(scale)
-          setScaleY(scale)
-          setOnFinishListener(object : ElasticFinishListener {
-            override fun onFinished() {
-              invokeListeners()
-            }
-          })
-        }.doAction()
-      }
+      elasticAnimation(this) {
+        setDuration(this@ElasticLayout.duration)
+        setScaleX(this@ElasticLayout.scale)
+        setScaleY(this@ElasticLayout.scale)
+        setOnFinishListener { invokeListeners() }
+      }.doAction()
     }
   }
 
@@ -89,20 +92,71 @@ class ElasticLayout : FrameLayout {
   }
 
   private fun setTypeArray(typedArray: TypedArray) {
-    this.scale = typedArray.getFloat(R.styleable.ElasticLayout_layout_scale, scale)
-    this.duration = typedArray.getInt(R.styleable.ElasticLayout_layout_duration, duration)
+    this.scale = typedArray.getFloat(R.styleable.ElasticLayout_layout_scale, this.scale)
+    this.duration = typedArray.getInt(R.styleable.ElasticLayout_layout_duration, this.duration)
+    this.cornerRadius =
+      typedArray.getDimension(R.styleable.ElasticLayout_layout_cornerRadius, this.cornerRadius)
+  }
+
+  override fun onFinishInflate() {
+    super.onFinishInflate()
+    initializeBackground()
+  }
+
+  private fun initializeBackground() {
+    if (background is ColorDrawable) {
+      background = GradientDrawable().apply {
+        cornerRadius = this@ElasticLayout.cornerRadius
+        setColor((background as ColorDrawable).color)
+      }.mutate()
+    }
   }
 
   override fun setOnClickListener(listener: OnClickListener?) {
     this.onClickListener = listener
   }
 
-  fun setOnFinishListener(listener: ElasticFinishListener) {
+  override fun setOnFinishListener(listener: ElasticFinishListener?) {
     this.onFinishListener = listener
   }
 
+  override fun setOnClickListener(block: (View) -> Unit) =
+    setOnClickListener(OnClickListener(block))
+
+  override fun setOnFinishListener(block: () -> Unit) =
+    setOnFinishListener(ElasticFinishListener(block))
+
   private fun invokeListeners() {
-    onClickListener?.onClick(this)
-    onFinishListener?.onFinished()
+    this.onClickListener?.onClick(this)
+    this.onFinishListener?.onFinished()
+  }
+
+  /** Builder class for creating [ElasticLayout]. */
+  class Builder(context: Context) {
+    private val elasticLayout = ElasticLayout(context)
+
+    fun setScale(value: Float) = apply { this.elasticLayout.scale = value }
+    fun setDuration(value: Int) = apply { this.elasticLayout.duration = value }
+    fun setCornerRadius(@Px value: Float) = apply { this.elasticLayout.cornerRadius = value }
+
+    @JvmSynthetic
+    fun setOnClickListener(block: (View) -> Unit) = apply {
+      setOnClickListener(OnClickListener(block))
+    }
+
+    fun setOnClickListener(value: OnClickListener) = apply {
+      this.elasticLayout.setOnClickListener(value)
+    }
+
+    @JvmSynthetic
+    fun setOnFinishListener(block: () -> Unit) = apply {
+      setOnFinishListener(ElasticFinishListener(block))
+    }
+
+    fun setOnFinishListener(value: ElasticFinishListener) = apply {
+      this.elasticLayout.setOnFinishListener(value)
+    }
+
+    fun build() = this.elasticLayout
   }
 }

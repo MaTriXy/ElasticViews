@@ -1,29 +1,47 @@
 # ElasticViews 
-![license](https://img.shields.io/badge/license-MIT%20License-blue.svg)
-[![API](https://img.shields.io/badge/API-15%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=15)
-[![Build Status](https://travis-ci.org/skydoves/ElasticViews.svg?branch=master)](https://travis-ci.org/skydoves/ElasticViews)
-[![Android Weekly](https://img.shields.io/badge/Android%20Weekly-%23336-orange.svg)](https://androidweekly.net/issues/issue-336)
-[![Javadoc](https://img.shields.io/badge/Javadoc-ElasticViews-yellow)](https://skydoves.github.io/libraries/elasticviews/javadoc/elasticviews/com.skydoves.elasticviews/index.html)
-<br>
 
-An easy way to implement the elastic touch effect for Android.
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/badge/license-MIT%20License-blue.svg"/></a>
+  <a href="https://android-arsenal.com/api?level=16"><img alt="API" src="https://img.shields.io/badge/API-16%2B-brightgreen.svg?style=flat"/></a>
+  <a href="https://travis-ci.org/skydoves/ElasticViews"><img alt="Build Status" src="https://travis-ci.org/skydoves/ElasticViews.svg?branch=master"/></a>
+  <a href="https://androidweekly.net/issues/issue-336"><img alt="Android Weekly" src="https://img.shields.io/badge/Android%20Weekly-%23336-orange.svg"/></a>
+  <a href="https://skydoves.github.io/libraries/elasticviews/javadoc/elasticviews/com.skydoves.elasticviews/index.html"><img alt="Javadoc" src="https://img.shields.io/badge/Javadoc-ElasticViews-yellow"/></a>
+</p>
 
-![gif0](https://user-images.githubusercontent.com/24237865/48674497-53e2f180-eb90-11e8-86fb-476f841b3e32.gif)
-![gif1](https://user-images.githubusercontent.com/24237865/48674498-53e2f180-eb90-11e8-8313-aa94b34a40d2.gif)
+<p align="center">
+✨ An easy way to implement an elastic touch effect for Android.
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/24237865/72123075-73943500-33a3-11ea-883f-9009de998788.gif" width="32%"/>
+<img src="https://user-images.githubusercontent.com/24237865/72123076-73943500-33a3-11ea-92ef-0924cd0b902e.gif" width="32%"/>
+</p>
 
 ## Including in your project
-[![Download](https://api.bintray.com/packages/devmagician/maven/elasticviews/images/download.svg)](https://bintray.com/devmagician/maven/elasticviews/_latestVersion)
-[![](https://jitpack.io/v/skydoves/ElasticViews.svg)](https://jitpack.io/#skydoves/ElasticViews)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.skydoves/elasticviews.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.skydoves%22%20AND%20a:%22elasticviews%22)
+[![Kitpack](https://jitpack.io/v/skydoves/ElasticViews.svg)](https://jitpack.io/#skydoves/ElasticViews)
 
-#### build.gradle
-Add below codes to your root `build.gradle` file (not your module build.gradle file).
+#### Gradle
+Add codes below to your **root** `build.gradle` file (not your module build.gradle file).
 ```gradle
-repositories {
-    jcenter()
+allprojects {
+    repositories {
+        mavenCentral()
+    }
 }
-
+```
+And add a dependency code to your **module**'s `build.gradle` file.
+```gradle
 dependencies {
-    implementation "com.github.skydoves:elasticviews:2.0.4"
+    implementation "com.github.skydoves:elasticviews:2.1.0"
+}
+```
+## SNAPSHOT 
+[![ElasticViews](https://img.shields.io/static/v1?label=snapshot&message=elasticviews&logo=apache%20maven&color=C71A36)](https://oss.sonatype.org/content/repositories/snapshots/com/github/skydoves/elasticviews/) <br>
+Snapshots of the current development version of ElasticViews are available, which track [the latest versions](https://oss.sonatype.org/content/repositories/snapshots/com/github/skydoves/elasticviews/).
+```Gradle
+repositories {
+   maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
 }
 ```
 
@@ -38,7 +56,7 @@ xmlns:app="http://schemas.android.com/apk/res-auto"
 ```
 
 #### OnClick Method
-All of ElasticViews should be set OnClickListener or OnClick Method, etc. If not, nothing happens.
+All of ElasticViews should be set `OnClickListener` or `onClick` method. If not, nothing happens.
 ```java
 ElasticButton elasticButton = (ElasticButton)findViewById(R.id.elasticbutton);
 elasticButton.setOnClickListener(new View.OnClickListener() {
@@ -49,14 +67,6 @@ elasticButton.setOnClickListener(new View.OnClickListener() {
 });
 ```
 
-or use butterknife
-```java
-@OnClick(R.id.elasticbutton)
-public void onClick(View v) {
-    // do something
-} 
-```
-
 ### ElasticButton
 ```gradle
 <com.skydoves.elasticviews.ElasticButton
@@ -65,6 +75,7 @@ public void onClick(View v) {
    android:text="Elastic Button"
    android:textColor="@android:color/white"
    android:textSize="17sp"
+   app:button_cornerRadius="4dp"
    app:button_duration="250"
    app:button_scale="0.87" />
 ```
@@ -78,6 +89,8 @@ public void onClick(View v) {
    android:text="Text"
    android:textColor="@android:color/white"
    android:textStyle="bold"
+   app:checkButton_cornerRadius="4dp"
+   app:checkButton_alpha="0.7"
    app:checkButton_duration="400"
    app:checkButton_scale="0.9" />
 ```
@@ -94,7 +107,7 @@ public void onClick(View v) {
    app:imageView_duration="300" />
 ```
 
-### ElasticFloatingButton
+### ElasticFloatingActionButton
 ```gradle
 <com.skydoves.elasticviews.ElasticFloatingActionButton
    android:layout_width="64dp"
@@ -106,6 +119,22 @@ public void onClick(View v) {
    app:fabutton_scale="0.85" />
 ```
 
+### ElasticCardView
+```gradle
+<com.skydoves.elasticviews.ElasticCardView
+  android:layout_width="match_parent"
+  android:layout_height="120dp"
+  app:cardCornerRadius="8dp"
+  app:cardElevation="12dp"
+  app:cardBackgroundColor="@color/background"
+  app:cardView_duration="250"
+  app:cardView_scale="0.8" >
+
+  ...
+
+</com.skydoves.elasticviews.ElasticCardView>
+```
+
 ### ElasticLayout
 ElasticLayout gives elastic animation to all child views.
 
@@ -113,7 +142,7 @@ ElasticLayout gives elastic animation to all child views.
 <com.skydoves.elasticviews.ElasticLayout
   android:layout_width="match_parent"
   android:layout_height="80dp"
-  app:layout_backgroundColor="#30354b"
+  app:layout_cornerRadius="4dp"
   app:layout_duration="500"
   app:layout_scale="0.85">
 
@@ -137,12 +166,14 @@ ElasticLayout gives elastic animation to all child views.
 </com.skydoves.elasticviews.ElasticLayout>
 ```
 
-### ElasticAnmimation
+### ElasticAnimation
 ElasticAnimation implements elastic animations for android views and view groups. <br>
 ```java
 new ElasticAnimation(clickedView).setScaleX(0.9f).setScaleY(0.9f).setDuration(400)
 .setOnFinishListener(onFinishListener).doAction();
 ```
+
+<img src="https://user-images.githubusercontent.com/24237865/72123077-742ccb80-33a3-11ea-9262-c4977983247e.gif" align="right" width="30%">
 
 #### ViewPropertyAnimatorListener
 we can set `ViewPropertyAnimatorListener` using `setListener` method and detect animation's status.
@@ -183,9 +214,9 @@ elasticAnimation(this) {
   setScaleX(scale)
   setScaleY(scale)
   setOnFinishListener(object : ElasticFinishListener {
-       override fun onFinished() {
-       onClick()
-    }
+      override fun onFinished() {
+           onClick()
+      }
   })
 }.doAction()
 ```
@@ -213,27 +244,21 @@ So also we can implement animation on listView's items like below.
 private class ListViewItemClickListener implements AdapterView.OnItemClickListener {
     @Override
     public void onItemClick(AdapterView<?> adapterView, View clickedView, final int pos, long id) {
-      new ElasticAnimation(clickedView).setScaleX(0.9f).setScaleY(0.9f).setDuration(400)
+        new ElasticAnimation(clickedView).setScaleX(0.9f).setScaleY(0.9f).setDuration(400)
         .setOnFinishListener(new ElasticFinishListener() {
               @Override
               public void onFinished() {
-              //Do something after duration time
-              Toast.makeText(getBaseContext(), "ListViewItem" + pos, Toast.LENGTH_SHORT).show();
+                  // Do something after duration time
+                  Toast.makeText(getBaseContext(), "ListViewItem" + pos, Toast.LENGTH_SHORT).show();
               }
           }).doAction();
         }
     };
 ```
 
-#### ElasticAnimation Preview
-![gif2](https://cloud.githubusercontent.com/assets/24237865/22189011/14bc94aa-e15d-11e6-9078-2dfc9d97ef87.gif)
-
 ## Find this library useful? :heart:
-Support it by joining __[stargazers](https://github.com/skydoves/ElasticViews/stargazers)__ for this repository. :star:
-
-## Supports :coffee:
-If you feel like support me a coffee for my efforts, I would greatly appreciate it. <br><br>
-<a href="https://www.buymeacoffee.com/skydoves" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/purple_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
+Support it by joining __[stargazers](https://github.com/skydoves/ElasticViews/stargazers)__ for this repository. :star: <br>
+And __[follow](https://github.com/skydoves)__ me for my next creations! 🤩
 
 # License
 ```xml

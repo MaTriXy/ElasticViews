@@ -26,46 +26,44 @@ package com.skydoves.elasticviews
 import android.content.Context
 import android.content.res.TypedArray
 import android.util.AttributeSet
+import android.view.View
+import android.view.View.OnClickListener
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 @Suppress("unused")
-class ElasticFloatingActionButton : FloatingActionButton {
+class ElasticFloatingActionButton @JvmOverloads constructor(
+  context: Context,
+  attrs: AttributeSet? = null,
+  defStyle: Int = com.google.android.material.R.attr.floatingActionButtonStyle
+) : FloatingActionButton(context, attrs, defStyle), ElasticInterface {
 
-  var scale = 0.9f
-  var duration = 500
+  /** The target elastic scale size of the animation. */
+  var scale = Definitions.DEFAULT_SCALE
+
+  /** The default duration of the animation. */
+  var duration = Definitions.DEFAULT_DURATION
 
   private var onClickListener: OnClickListener? = null
   private var onFinishListener: ElasticFinishListener? = null
 
-  constructor(context: Context) : super(context) {
+  init {
     onCreate()
-  }
-
-  constructor(context: Context, attributeSet: AttributeSet) : super(context, attributeSet) {
-    onCreate()
-    getAttrs(attributeSet)
-  }
-
-  constructor(context: Context, attributeSet: AttributeSet, defStyle: Int) : super(context, attributeSet, defStyle) {
-    onCreate()
-    getAttrs(attributeSet, defStyle)
+    when {
+      attrs != null && defStyle != com.google.android.material.R.attr.floatingActionButtonStyle ->
+        getAttrs(attrs, defStyle)
+      attrs != null -> getAttrs(attrs)
+    }
   }
 
   private fun onCreate() {
     this.isClickable = true
     super.setOnClickListener {
-      if (scaleX == 1f) {
-        elasticAnimation(this) {
-          setDuration(duration)
-          setScaleX(scale)
-          setScaleY(scale)
-          setOnFinishListener(object : ElasticFinishListener {
-            override fun onFinished() {
-              invokeListeners()
-            }
-          })
-        }.doAction()
-      }
+      elasticAnimation(this) {
+        setDuration(this@ElasticFloatingActionButton.duration)
+        setScaleX(this@ElasticFloatingActionButton.scale)
+        setScaleY(this@ElasticFloatingActionButton.scale)
+        setOnFinishListener { invokeListeners() }
+      }.doAction()
     }
   }
 
@@ -75,25 +73,61 @@ class ElasticFloatingActionButton : FloatingActionButton {
   }
 
   private fun getAttrs(attrs: AttributeSet, defStyle: Int) {
-    val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ElasticFloatingActionButton, defStyle, 0)
+    val typedArray =
+      context.obtainStyledAttributes(attrs, R.styleable.ElasticFloatingActionButton, defStyle, 0)
     setTypeArray(typedArray)
   }
 
   private fun setTypeArray(typedArray: TypedArray) {
     this.scale = typedArray.getFloat(R.styleable.ElasticFloatingActionButton_fabutton_scale, scale)
-    this.duration = typedArray.getInt(R.styleable.ElasticFloatingActionButton_fabutton_duration, duration)
+    this.duration =
+      typedArray.getInt(R.styleable.ElasticFloatingActionButton_fabutton_duration, duration)
   }
 
   override fun setOnClickListener(listener: OnClickListener?) {
     this.onClickListener = listener
   }
 
-  fun setOnFinishListener(listener: ElasticFinishListener) {
+  override fun setOnFinishListener(listener: ElasticFinishListener?) {
     this.onFinishListener = listener
   }
 
+  override fun setOnClickListener(block: (View) -> Unit) =
+    setOnClickListener(OnClickListener(block))
+
+  override fun setOnFinishListener(block: () -> Unit) =
+    setOnFinishListener(ElasticFinishListener(block))
+
   private fun invokeListeners() {
-    onClickListener?.onClick(this)
-    onFinishListener?.onFinished()
+    this.onClickListener?.onClick(this)
+    this.onFinishListener?.onFinished()
+  }
+
+  /** Builder class for creating [ElasticFloatingActionButton]. */
+  class Builder(context: Context) {
+    private val elasticFloatingButton = ElasticFloatingActionButton(context)
+
+    fun setScale(value: Float) = apply { this.elasticFloatingButton.scale = value }
+    fun setDuration(value: Int) = apply { this.elasticFloatingButton.duration = value }
+
+    @JvmSynthetic
+    fun setOnClickListener(block: (View) -> Unit) = apply {
+      setOnClickListener(OnClickListener(block))
+    }
+
+    fun setOnClickListener(value: OnClickListener) = apply {
+      this.elasticFloatingButton.setOnClickListener(value)
+    }
+
+    @JvmSynthetic
+    fun setOnFinishListener(block: () -> Unit) = apply {
+      setOnFinishListener(ElasticFinishListener(block))
+    }
+
+    fun setOnFinishListener(value: ElasticFinishListener) = apply {
+      this.elasticFloatingButton.setOnFinishListener(value)
+    }
+
+    fun build() = this.elasticFloatingButton
   }
 }

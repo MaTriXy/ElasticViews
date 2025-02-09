@@ -25,15 +25,38 @@ package com.skydoves.elasticviews
 
 import android.content.Context
 import android.content.res.TypedArray
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
+import android.view.View
+import android.view.View.OnClickListener
+import androidx.annotation.FloatRange
+import androidx.annotation.Px
 import androidx.appcompat.widget.AppCompatButton
 
 @Suppress("unused")
-class ElasticCheckButton : AppCompatButton {
+class ElasticCheckButton @JvmOverloads constructor(
+  context: Context,
+  attrs: AttributeSet? = null,
+  defStyle: Int = androidx.appcompat.R.attr.buttonStyle
+) : AppCompatButton(context, attrs, defStyle), ElasticInterface {
 
-  var checkedAlpha = 0.7f
-  var scale = 0.9f
-  var duration = 500
+  /** The target elastic scale size of the animation. */
+  var scale = Definitions.DEFAULT_SCALE
+
+  /** The default duration of the animation. */
+  var duration = Definitions.DEFAULT_DURATION
+
+  @FloatRange(from = 0.0, to = 1.0)
+  var checkedAlpha = 0.5f
+    set(value) {
+      field = value
+      updateElasticCheckButton()
+    }
+
+  @Px
+  var cornerRadius = 0f
+
   var isChecked = false
     set(value) {
       field = value
@@ -43,36 +66,25 @@ class ElasticCheckButton : AppCompatButton {
   private var onClickListener: OnClickListener? = null
   private var onFinishListener: ElasticFinishListener? = null
 
-  constructor(context: Context) : super(context) {
+  init {
     onCreate()
-  }
-
-  constructor(context: Context, attributeSet: AttributeSet) : super(context, attributeSet) {
-    onCreate()
-    getAttrs(attributeSet)
-  }
-
-  constructor(context: Context, attributeSet: AttributeSet, defStyle: Int) : super(context, attributeSet, defStyle) {
-    onCreate()
-    getAttrs(attributeSet, defStyle)
+    when {
+      attrs != null && defStyle != androidx.appcompat.R.attr.buttonStyle ->
+        getAttrs(attrs, defStyle)
+      attrs != null -> getAttrs(attrs)
+    }
   }
 
   private fun onCreate() {
     this.isAllCaps = false
     super.setOnClickListener {
-      isChecked = !isChecked
-      if (scaleX == 1f) {
-        elasticAnimation(this) {
-          setDuration(duration)
-          setScaleX(scale)
-          setScaleY(scale)
-          setOnFinishListener(object : ElasticFinishListener {
-            override fun onFinished() {
-              invokeListeners()
-            }
-          })
-        }.doAction()
-      }
+      this.isChecked = !this.isChecked
+      elasticAnimation(this) {
+        setDuration(this@ElasticCheckButton.duration)
+        setScaleX(this@ElasticCheckButton.scale)
+        setScaleY(this@ElasticCheckButton.scale)
+        setOnFinishListener { invokeListeners() }
+      }.doAction()
     }
   }
 
@@ -86,7 +98,8 @@ class ElasticCheckButton : AppCompatButton {
   }
 
   private fun getAttrs(attrs: AttributeSet, defStyle: Int) {
-    val typedArray = context.obtainStyledAttributes(attrs, R.styleable.ElasticCheckButton, defStyle, 0)
+    val typedArray =
+      context.obtainStyledAttributes(attrs, R.styleable.ElasticCheckButton, defStyle, 0)
     try {
       setTypeArray(typedArray)
     } finally {
@@ -95,20 +108,38 @@ class ElasticCheckButton : AppCompatButton {
   }
 
   private fun setTypeArray(typedArray: TypedArray) {
-    this.scale = typedArray.getFloat(R.styleable.ElasticCheckButton_checkButton_scale, scale)
-    this.duration = typedArray.getInt(R.styleable.ElasticCheckButton_checkButton_duration, duration)
-    this.checkedAlpha = typedArray.getFloat(R.styleable.ElasticCheckButton_checkButton_alpha, checkedAlpha)
-    this.isChecked = typedArray.getBoolean(R.styleable.ElasticCheckButton_checkButton_isChecked, isChecked)
+    this.scale = typedArray.getFloat(R.styleable.ElasticCheckButton_checkButton_scale, this.scale)
+    this.duration =
+      typedArray.getInt(R.styleable.ElasticCheckButton_checkButton_duration, this.duration)
+    this.cornerRadius =
+      typedArray.getDimension(
+        R.styleable.ElasticCheckButton_checkButton_cornerRadius,
+        this.cornerRadius
+      )
+    this.checkedAlpha =
+      typedArray.getFloat(R.styleable.ElasticCheckButton_checkButton_alpha, this.checkedAlpha)
+    this.isChecked =
+      typedArray.getBoolean(R.styleable.ElasticCheckButton_checkButton_isChecked, this.isChecked)
   }
 
   override fun onFinishInflate() {
     super.onFinishInflate()
+    initializeBackground()
     updateElasticCheckButton()
   }
 
+  private fun initializeBackground() {
+    if (background is ColorDrawable) {
+      background = GradientDrawable().apply {
+        cornerRadius = this@ElasticCheckButton.cornerRadius
+        setColor((background as ColorDrawable).color)
+      }.mutate()
+    }
+  }
+
   private fun updateElasticCheckButton() {
-    if (isChecked) {
-      this.alpha = checkedAlpha
+    if (this.isChecked) {
+      this.alpha = this.checkedAlpha
     }
   }
 
@@ -116,16 +147,51 @@ class ElasticCheckButton : AppCompatButton {
     this.onClickListener = listener
   }
 
-  fun setOnFinishListener(listener: ElasticFinishListener) {
+  override fun setOnFinishListener(listener: ElasticFinishListener?) {
     this.onFinishListener = listener
   }
 
+  override fun setOnClickListener(block: (View) -> Unit) =
+    setOnClickListener(OnClickListener(block))
+
+  override fun setOnFinishListener(block: () -> Unit) =
+    setOnFinishListener(ElasticFinishListener(block))
+
   private fun invokeListeners() {
-    alpha = when (isChecked) {
-      true -> checkedAlpha
+    this.alpha = when (this.isChecked) {
+      true -> this.checkedAlpha
       false -> 1.0f
     }
-    onClickListener?.onClick(this)
-    onFinishListener?.onFinished()
+    this.onClickListener?.onClick(this)
+    this.onFinishListener?.onFinished()
+  }
+
+  /** Builder class for creating [ElasticCheckButton]. */
+  class Builder(context: Context) {
+    private val elasticCheckButton = ElasticCheckButton(context)
+
+    fun setScale(value: Float) = apply { this.elasticCheckButton.scale = value }
+    fun setDuration(value: Int) = apply { this.elasticCheckButton.duration = value }
+    fun setCornerRadius(@Px value: Float) = apply { this.elasticCheckButton.cornerRadius = value }
+
+    @JvmSynthetic
+    fun setOnClickListener(block: (View) -> Unit) = apply {
+      setOnClickListener(OnClickListener(block))
+    }
+
+    fun setOnClickListener(value: OnClickListener) = apply {
+      this.elasticCheckButton.setOnClickListener(value)
+    }
+
+    @JvmSynthetic
+    fun setOnFinishListener(block: () -> Unit) = apply {
+      setOnFinishListener(ElasticFinishListener(block))
+    }
+
+    fun setOnFinishListener(value: ElasticFinishListener) = apply {
+      this.elasticCheckButton.setOnFinishListener(value)
+    }
+
+    fun build() = this.elasticCheckButton
   }
 }

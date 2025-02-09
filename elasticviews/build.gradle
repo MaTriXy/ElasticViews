@@ -1,8 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
-apply plugin: 'org.jetbrains.dokka-android'
-apply from: '../publish.gradle'
+apply plugin: 'org.jetbrains.dokka'
+apply plugin: 'binary-compatibility-validator'
 apply from: '../dependencies.gradle'
 
 android {
@@ -13,24 +12,27 @@ android {
         versionCode versions.versionCode
         versionName versions.versionName
     }
+    buildFeatures {
+        buildConfig false
+    }
+}
+
+kotlin {
+    explicitApiWarning()
+}
+
+apiValidation {
+    ignoredPackages += [
+        "com/skydoves/elasticviews/databinding",
+    ]
+    nonPublicMarkers += [
+        "kotlin.PublishedApi",
+    ]
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin"
     implementation "com.google.android.material:material:$versions.googleMaterial"
 }
 
-dokka {
-    moduleName = 'elasticviews'
-    outputFormat = 'html'
-    //noinspection GroovyAccessibility
-    outputDirectory = "$buildDir/javadoc"
-}
-
-
-tasks.withType(Javadoc) {
-    excludes = ['**/*.kt']
-    options.addBooleanOption('Xdoclint:none', true)
-}
-
+apply plugin: "com.vanniktech.maven.publish"
 apply from: '../spotless.gradle'

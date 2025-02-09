@@ -21,32 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.skydoves.elasticviewsdemo;
+package com.skydoves.elasticviews
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.View;
-import androidx.appcompat.app.AppCompatActivity;
+import android.view.View
 
-public class MainActivity extends AppCompatActivity {
+/**
+ * ElasticView is an interface for abstracting elastic view's listener.
+ */
+internal interface ElasticInterface {
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
-  }
+  fun setOnClickListener(block: (View) -> Unit)
 
-  public void ElasticButtons(View v) {
-    switch (v.getId()) {
-      case R.id.elasticbtn0:
-        startActivity(new Intent(getBaseContext(), ExampleActivity0.class));
-        break;
-      case R.id.elasticbtn1:
-        startActivity(new Intent(getBaseContext(), ExampleActivity1.class));
-        break;
-      case R.id.elasticbtn2:
-        startActivity(new Intent(getBaseContext(), ExampleActivity2.class));
-        break;
-    }
-  }
+  fun setOnFinishListener(listener: ElasticFinishListener?)
+
+  fun setOnFinishListener(block: () -> Unit)
 }

@@ -21,6 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+@file:Suppress("unused")
+
 package com.skydoves.elasticviews
 
 import android.view.View
@@ -28,67 +30,94 @@ import android.view.ViewGroup
 import android.view.animation.CycleInterpolator
 import androidx.core.view.ViewCompat
 import androidx.core.view.ViewPropertyAnimatorListener
-
-/** ElasticAnimation extension for views. */
-@Suppress("unused")
-fun View.elasticAnimation(scaleX: Float, scaleY: Float, duration: Int, listener: ElasticFinishListener): ElasticAnimation {
-  return ElasticAnimation(this).setScaleX(scaleX).setScaleY(scaleY).setDuration(duration).setOnFinishListener(listener)
-}
-
-/** for create ElasticAnimation by kotlin dsl. */
-@Suppress("unused")
-fun elasticAnimation(view: View, block: ElasticAnimation.() -> Unit): ElasticAnimation =
-  ElasticAnimation(view).apply(block)
+import com.skydoves.elasticviews.Definitions.DEFAULT_ANIMATION_ANCHOR
+import com.skydoves.elasticviews.Definitions.DEFAULT_DURATION
+import com.skydoves.elasticviews.Definitions.DEFAULT_SCALE_X
+import com.skydoves.elasticviews.Definitions.DEFAULT_SCALE_Y
 
 /** ElasticAnimation implements elastic animations for android views or view groups. */
-@Suppress("unused")
 class ElasticAnimation(private val view: View) {
 
   @JvmField
-  var scaleX = 0.7f
+  @set:JvmSynthetic
+  var scaleX = DEFAULT_SCALE_X
+
   @JvmField
-  var scaleY = 0.7f
+  @set:JvmSynthetic
+  var scaleY = DEFAULT_SCALE_Y
+
   @JvmField
-  var duration = 400
+  @set:JvmSynthetic
+  var duration = DEFAULT_DURATION
+
   @JvmField
+  @set:JvmSynthetic
   var listener: ViewPropertyAnimatorListener? = null
+
   @JvmField
+  @set:JvmSynthetic
   var finishListener: ElasticFinishListener? = null
 
+  var isAnimating: Boolean = false
+    private set
+
+  /** Sets a target elastic scale-x size of the animation. */
   fun setScaleX(scaleX: Float): ElasticAnimation = apply { this.scaleX = scaleX }
+
+  /** Sets a target elastic scale-y size of the animation. */
   fun setScaleY(scaleY: Float): ElasticAnimation = apply { this.scaleY = scaleY }
+
+  /** Sets a duration of the animation. */
   fun setDuration(duration: Int): ElasticAnimation = apply { this.duration = duration }
-  fun setListener(listener: ViewPropertyAnimatorListener): ElasticAnimation = apply { this.listener = listener }
-  fun setOnFinishListener(finishListener: ElasticFinishListener): ElasticAnimation = apply { this.finishListener = finishListener }
+
+  /** Sets an animator listener of the animation. */
+  fun setListener(listener: ViewPropertyAnimatorListener): ElasticAnimation = apply {
+    this.listener = listener
+  }
+
+  /** An animator listener of the animation. */
+  fun setOnFinishListener(finishListener: ElasticFinishListener?): ElasticAnimation = apply {
+    this.finishListener = finishListener
+  }
+
+  /** An [ElasticFinishListener] listener of the animation. */
+  @JvmSynthetic
+  inline fun setOnFinishListener(crossinline block: () -> Unit): ElasticAnimation = apply {
+    this.finishListener = ElasticFinishListener { block() }
+  }
 
   /** starts elastic animation. */
   fun doAction() {
-    val animatorCompat = ViewCompat.animate(view)
-      .setDuration(duration.toLong())
-      .scaleX(scaleX)
-      .scaleY(scaleY)
-      .setInterpolator(CycleInterpolator(0.5f))
-    listener?.let { animatorCompat.setListener(it) }
-    finishListener?.let {
-      animatorCompat.setListener(object : ViewPropertyAnimatorListener {
-        override fun onAnimationEnd(view: View?) = it.onFinished()
-        override fun onAnimationCancel(view: View?) = Unit
-        override fun onAnimationStart(view: View?) = Unit
-      })
-    }
+    if (!isAnimating && view.scaleX == 1f) {
+      val animatorCompat = ViewCompat.animate(view)
+        .setDuration(duration.toLong())
+        .scaleX(scaleX)
+        .scaleY(scaleY)
+        .setInterpolator(CycleInterpolator(DEFAULT_ANIMATION_ANCHOR)).apply {
+          listener?.let { setListener(it) } ?: setListener(object : ViewPropertyAnimatorListener {
+            override fun onAnimationCancel(view: View?) = Unit
+            override fun onAnimationStart(view: View?) {
+              isAnimating = true
+            }
 
-    if (view is ViewGroup) {
-      for (index in 0 until view.childCount) {
-        val nextChild = view.getChildAt(index)
-        ViewCompat.animate(nextChild)
-          .setDuration(duration.toLong())
-          .scaleX(scaleX)
-          .scaleY(scaleY)
-          .setInterpolator(CycleInterpolator(0.5f))
-          .withLayer()
-          .start()
+            override fun onAnimationEnd(view: View?) {
+              finishListener?.onFinished()
+              isAnimating = false
+            }
+          })
+        }
+      if (view is ViewGroup) {
+        (0 until view.childCount).map { view.getChildAt(it) }.forEach { child ->
+          ViewCompat.animate(child)
+            .setDuration(duration.toLong())
+            .scaleX(scaleX)
+            .scaleY(scaleY)
+            .setInterpolator(CycleInterpolator(DEFAULT_ANIMATION_ANCHOR))
+            .withLayer()
+            .start()
+        }
       }
+      animatorCompat.withLayer().start()
     }
-    animatorCompat.withLayer().start()
   }
 }
